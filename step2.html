@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Step 2 - Static Rubik's Cube</title>
+    <script type="text/javascript" src="./threejs/three.js"></script>
+    <link rel="stylesheet" href="./reset.import.css">
+    <style type="text/css">
+        div#canvas-frame {
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            background-color: #EEEEEE;
+        }
+    </style>
+</head>
+
+<body onload="threeStart();">
+    <div id="canvas-frame"></div>
+    <script>
+        let renderer;
+        let width;
+        let height;
+        const origPoint = new THREE.Vector3(0, 0, 0);
+
+        window.requestAnimFrame = (function() { // need requestAnimationFrame to refresh frame
+            return window.requestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame ||
+                window.webkitRequestAnimationFrame;
+        })();
+
+        // main function.
+        function threeStart() {
+            initThree();
+            initCamera();
+            initScene();
+            initLight();
+            initObject();
+            render();
+        }
+
+        // Create Renderer with given width and height.
+        function initThree() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setSize(width, height);
+            renderer.setClearColor(0xFFFFFF, 1.0);
+            document.getElementById('canvas-frame').appendChild(renderer.domElement);
+        }
+
+        // Create camera. Set direction and position.
+        let camera;
+
+        function initCamera() {
+            camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
+            camera.position.set(0, 0, 600);
+            camera.up.set(0, 1, 0); //正方向
+            camera.lookAt(origPoint);
+        }
+
+        // Create Scene. Objects will be added in scene.
+        let scene;
+
+        function initScene() {
+            scene = new THREE.Scene();
+        }
+
+        // Create ambient light.
+        let light;
+
+        function initLight() {
+            light = new THREE.AmbientLight(0xfefefe);
+            scene.add(light);
+        }
+
+        const cubeParams = { // cube arguments.
+            x: 0,
+            y: 0,
+            z: 0,
+            num: 3,
+            len: 50,
+            colors: ['rgba(255,193,37,1)', 'rgba(0,191,255,1)',
+                'rgba(50,205,50,1)', 'rgba(178,34,34,1)',
+                'rgba(255,255,0,1)', 'rgba(255,255,255,1)'
+            ]
+        };
+
+        /**
+         * Simple Rubik's Cube.
+         * @param (x,y,z): the center point.
+         * @apram num: the level of the cube.
+         * @param len: the length of each atmoic cube component.
+         * @param colors: colors of six faces.
+         */
+        function createRubiks(x, y, z, num, len, colors) {
+            // Upper left point position.
+            let UpLeftX = x - num / 2 * len;
+            let UpLeftY = y + num / 2 * len;
+            let UpLeftZ = z + num / 2 * len;
+
+            // materials of each face with given colors.
+            let materialArr = [];
+            for (let i = 0; i < colors.length; i++) {
+                let texture = new THREE.Texture(createFace(colors[i]));
+                texture.needsUpdate = true;
+                let material = new THREE.MeshLambertMaterial({
+                    map: texture
+                });
+                materialArr.push(material);
+            }
+
+            let cubes = [];
+            for (let i = 0; i < num; i++) {
+                for (let j = 0; j < num * num; j++) {
+                    let cubegeo = new THREE.BoxGeometry(len, len, len);
+                    let cube = new THREE.Mesh(cubegeo, materialArr);
+
+                    // Centers of atomic cube components.
+                    cube.position.x = (UpLeftX + len / 2) + (j % num) * len;
+                    cube.position.y = (UpLeftY - len / 2) - parseInt(j / num) * len;
+                    cube.position.z = (UpLeftZ - len / 2) - i * len;
+                    cubes.push(cube)
+                }
+            }
+            return cubes;
+        }
+
+        // Function to create texture for each face on canvas.
+        function createFace(rgbaColor) {
+            let canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            let context = canvas.getContext('2d');
+            if (context) {
+                // Background: 256*256 square.
+                context.fillStyle = 'rgba(0,0,0,1)';
+                context.fillRect(0, 0, 256, 256);
+                // Inner colored context: 224*224 rounded square with 16px padding. 
+                context.rect(16, 16, 224, 224);
+                context.lineJoin = 'round';
+                context.lineWidth = 16;
+                context.fillStyle = rgbaColor;
+                context.strokeStyle = rgbaColor;
+                context.stroke();
+                context.fill();
+            } else {
+                alert('The browser does not support viewing this Canvas.\n');
+            }
+            return canvas;
+        }
+
+        // Create objects in scene.
+        let cubes
+
+        function initObject() {
+            // Create simple cube.
+            cubes = createRubiks(cubeParams.x, cubeParams.y, cubeParams.z, cubeParams.num, cubeParams.len, cubeParams.colors);
+            for (let i = 0; i < cubes.length; i++) {
+                let item = cubes[i];
+                scene.add(cubes[i]);
+            }
+        }
+
+        // Render scene.
+        function render() {
+            renderer.clear();
+            renderer.render(scene, camera);
+            window.requestAnimFrame(render);
+        }
+    </script>
+</body>
+
+</html>
