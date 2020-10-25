@@ -23,8 +23,7 @@
         let renderer;
         let width;
         let height;
-        const origPoint = new THREE.Vector3(0, 0, 0);
-        let raycaster = new THREE.Raycaster(); // ray caster, which will help detect collision.
+        let raycaster = new THREE.Raycaster(); // ray caster helps detect intersection.
         let mouse = new THREE.Vector2();
         let isRotating = false;
         let intersect;
@@ -32,6 +31,7 @@
         let startPoint;
         let movePoint;
         let initStatus = [];
+        const origin = new THREE.Vector3(0, 0, 0);
 
         // Six possible rotation directions.
         const xLine = new THREE.Vector3(1, 0, 0); // X
@@ -68,7 +68,7 @@
             camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
             camera.position.set(0, 0, 600);
             camera.up.set(0, 1, 0);
-            camera.lookAt(origPoint);
+            camera.lookAt(origin);
         }
 
         // Create Scene.
@@ -349,7 +349,7 @@
                         rotateAroundWorldX(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
                     }
                     break;
-                // Anti-Clockwise around X.
+                // Counter-Clockwise around X.
                 case 2:
                     for (let i = 0; i < elements.length; i++) {
                         rotateAroundWorldX(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
@@ -361,7 +361,7 @@
                         rotateAroundWorldY(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
                     }
                     break;
-                // Anti-Clockwise around Y.
+                // Counter-Clockwise around Y.
                 case 4:
                     for (let i = 0; i < elements.length; i++) {
                         rotateAroundWorldY(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
@@ -373,7 +373,7 @@
                         rotateAroundWorldZ(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
                     }
                     break;
-                // Anti-Clockwise around Z.
+                // Counter-Clockwise around Z.
                 case 6:
                     for (let i = 0; i < elements.length; i++) {
                         rotateAroundWorldZ(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
@@ -452,7 +452,7 @@
             return boxs;
         }
 
-        // function to get rotation direction.
+        // Function to get rotation direction.
         function getDirection(vector3) {
             let direction;
             // calculate angle of vector to x,y,z-axis.
@@ -467,68 +467,68 @@
             switch (minAngle) {
                 case xAngle: // Rotate 90 degrees to the positive X.
                     if (normalize.equals(yLine)) {
-                        direction = 5; // clockwise around Z.
+                        direction = 5; // Clockwise around Z.
                     } else if (normalize.equals(yLineR)) {
-                        direction = 6; // anti-clockwise around Z.
+                        direction = 6; // Counter-Clockwise around Z.
                     } else if (normalize.equals(zLine)) {
-                        direction = 4; // anti-clockwise around Y.
+                        direction = 4; // Counter-Clockwise around Y.
                     } else {
-                        direction = 3; // clockwise around Y.
+                        direction = 3; // Clockwise around Y.
                     }
                     break;
                 case xAngleR: // Rotate 90 degrees to the negative X.
                     if (normalize.equals(yLine)) {
-                        direction = 6; // anti-clockwise around Z.
+                        direction = 6; // Counter-Clockwise around Z.
                     } else if (normalize.equals(yLineR)) {
-                        direction = 5; // clockwise around Z.
+                        direction = 5; // Clockwise around Z.
                     } else if (normalize.equals(zLine)) {
-                        direction = 3; // clockwise around Y.
+                        direction = 3; // Clockwise around Y.
                     } else {
-                        direction = 4; // anti-clockwise around Y.
+                        direction = 4; // Counter-Clockwise around Y.
                     }
                     break;
                 case yAngle: // Rotate 90 degrees to the positive Y.
                     if (normalize.equals(zLine)) {
-                        direction = 2; // anti-clockwise around X.
+                        direction = 2; // Counter-Clockwise around X.
                     } else if (normalize.equals(zLineR)) {
-                        direction = 1; // clockwise around X.
+                        direction = 1; // Clockwise around X.
                     } else if (normalize.equals(xLine)) {
-                        direction = 6; // anti-clockwise around Z.
+                        direction = 6; // Counter-Clockwise around Z.
                     } else {
-                        direction = 5; // clockwise around Z.
+                        direction = 5; // Clockwise around Z.
                     }
                     break;
                 case yAngleR: // Rotate 90 degrees to the negative Y.
                     if (normalize.equals(zLine)) {
-                        direction = 1; // clockwise around X.
+                        direction = 1; // Clockwise around X.
                     } else if (normalize.equals(zLineR)) {
-                        direction = 2; // anti-clockwise around X.
+                        direction = 2; // Counter-Clockwise around X.
                     } else if (normalize.equals(xLine)) {
-                        direction = 5; // clockwise around Z.
+                        direction = 5; // Clockwise around Z.
                     } else {
-                        direction = 6; // anti-clockwise around Z.
+                        direction = 6; // Counter-Clockwise around Z.
                     }
                     break;
                 case zAngle: // Rotate 90 degrees to the positive Z.
                     if (normalize.equals(yLine)) {
-                        direction = 1; // clockwise around X.
+                        direction = 1; // Clockwise around X.
                     } else if (normalize.equals(yLineR)) {
-                        direction = 2; // anti-clockwise around X.
+                        direction = 2; // Counter-Clockwise around X.
                     } else if (normalize.equals(xLine)) {
-                        direction = 3; // clockwise around Y.
+                        direction = 3; // Clockwise around Y.
                     } else {
-                        direction = 4; // anti-clockwise around Y.
+                        direction = 4; // Counter-Clockwise around Y.
                     }
                     break;
                 case zAngleR: // Rotate 90 degrees to the negative Z.
                     if (normalize.equals(yLine)) {
-                        direction = 2; // anti-clockwise around X.
+                        direction = 2; // Counter-Clockwise around X.
                     } else if (normalize.equals(yLineR)) {
-                        direction = 1; // clockwise around X.
+                        direction = 1; // Clockwise around X.
                     } else if (normalize.equals(xLine)) {
-                        direction = 4; // anti-clockwise around Y.
+                        direction = 4; // Counter-Clockwise around Y.
                     } else {
-                        direction = 3; // clockwise around Y.
+                        direction = 3; // Clockwise around Y.
                     }
                     break;
                 default:
