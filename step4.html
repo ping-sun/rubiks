@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Step 4 - Cube Rotation</title>
+    <script type="text/javascript" src="./threejs/three.js"></script>
+    <script type="text/javascript" src="./threejs/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="./reset.import.css">
+    <style type="text/css">
+        div#canvas-frame {
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            background-color: #EEEEEE;
+        }
+    </style>
+</head>
+
+<body onload="threeStart();">
+    <div id="canvas-frame"></div>
+    <script>
+        let renderer;
+        let width;
+        let height;
+        const origPoint = new THREE.Vector3(0, 0, 0);
+        let raycaster = new THREE.Raycaster(); // ray caster, which will help detect collision.
+        let mouse = new THREE.Vector2();
+        let isRotating = false;
+        let intersect;
+        let normalize;
+        let startPoint;
+        let movePoint;
+        let initStatus = [];
+
+        // Six possible rotation directions.
+        const xLine = new THREE.Vector3(1, 0, 0); // X
+        const xLineR = new THREE.Vector3(-1, 0, 0); // Anti-X
+        const yLine = new THREE.Vector3(0, 1, 0); // Y
+        const yLineR = new THREE.Vector3(0, -1, 0); // Anti-Y
+        const zLine = new THREE.Vector3(0, 0, 1); // Z
+        const zLineR = new THREE.Vector3(0, 0, -1); // Anti-Z
+
+        window.requestAnimFrame = (function() { // need requestAnimationFrame to refresh frame
+            return window.requestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame ||
+                window.webkitRequestAnimationFrame;
+        })();
+
+        // Create Renderer with given width and height.
+        function initRenderer() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setSize(width, height);
+            renderer.setClearColor(0xFFFFFF, 1.0);
+            document.getElementById('canvas-frame').appendChild(renderer.domElement);
+        }
+
+        // Create camera. Set direction and position.
+        let camera;
+        let controller; // View Controller.
+        function initCamera() {
+            camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+            camera.position.set(0, 0, 600);
+            camera.up.set(0, 1, 0);
+            camera.lookAt(origPoint);
+        }
+
+        // Create Scene.
+        let scene;
+
+        function initScene() {
+            scene = new THREE.Scene();
+        }
+
+        // Create ambient light.
+        let light;
+
+        function initLight() {
+            light = new THREE.AmbientLight(0xfefefe);
+            scene.add(light);
+        }
+
+        const cubeParams = { // cube arguments.
+            x: 0,
+            y: 0,
+            z: 0,
+            num: 3,
+            len: 50,
+            colors: ['rgba(255,193,37,1)', 'rgba(0,191,255,1)',
+                'rgba(50,205,50,1)', 'rgba(178,34,34,1)',
+                'rgba(255,255,0,1)', 'rgba(255,255,255,1)'
+            ]
+        };
+
+        /**
+         * Simple Rubik's Cube.
+         * @param (x,y,z): the center point.
+         * @apram num: the level of the cube.
+         * @param len: the length of each atmoic cube component.
+         * @param colors: colors of six faces.
+         */
+        function createRubiks(x, y, z, num, len, colors) {
+            // Upper left vertice position.
+            const UpLeftX = x - num / 2 * len;
+            const UpLeftY = y + num / 2 * len;
+            const UpLeftZ = z + num / 2 * len;
+            const gray = 'rgba(25,25,25,1)';
+
+            let cubes = [];
+            for (let Z = 0; Z < num; Z++) {
+                for (let Y = 0; Y < num; Y++) {
+                    for (let X = 0; X < num; X++) {
+                        let cubegeo = new THREE.BoxGeometry(len, len, len);
+                        let materialArr = [];
+                        for (let c = 0; c < colors.length; c++) {
+                            let color = colors[c];
+                            if (c == 0 && X != 2) color = gray;
+                            if (c == 1 && X != 0) color = gray;
+                            if (c == 2 && Y != 0) color = gray;
+                            if (c == 3 && Y != 2) color = gray;
+                            if (c == 4 && Z != 0) color = gray;
+                            if (c == 5 && Z != 2) color = gray;
+                            let texture = new THREE.Texture(createFace(color));
+                            texture.needsUpdate = true;
+                            let material = new THREE.MeshLambertMaterial({
+                                map: texture
+                            });
+                            materialArr.push(material);
+                        }
+                        let cube = new THREE.Mesh(cubegeo, materialArr);
+
+                        // Centers of atomic cube components.
+                        cube.position.x = (UpLeftX + len / 2) + X * len;
+                        cube.position.y = (UpLeftY - len / 2) - Y * len;
+                        cube.position.z = (UpLeftZ - len / 2) - Z * len;
+                        cubes.push(cube)
+                    }
+                }
+            }
+            return cubes;
+        }
+
+        // Function to create texture for a face of the atmoic cube on canvas.
+        function createFace(rgbaColor) {
+            let canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            let context = canvas.getContext('2d');
+            if (context) {
+                // Background: 256*256 square.
+                context.fillStyle = 'rgba(0,0,0,1)';
+                context.fillRect(0, 0, 256, 256);
+                // Inner colored context: 224*224 rounded square with 16px padding. 
+                context.rect(16, 16, 224, 224);
+                context.lineJoin = 'round';
+                context.lineWidth = 16;
+                context.fillStyle = rgbaColor;
+                context.strokeStyle = rgbaColor;
+                context.stroke();
+                context.fill();
+            } else {
+                alert('The browser does not support viewing this Canvas.\n');
+            }
+            return canvas;
+        }
+
+        // Create objects in scene.
+        let cubes
+
+        function initObject() {
+            // Create simple cube.
+            cubes = createRubiks(cubeParams.x, cubeParams.y, cubeParams.z, cubeParams.num, cubeParams.len, cubeParams.colors);
+            for (let i = 0; i < cubes.length; i++) {
+                let item = cubes[i];
+                // console.log(item);
+                /**
+                 * Since we are using item.id to select moving items, we need to set an extra dynamic cubeIndex.
+                 * Update cubeIndex after rotation according to the init status.
+                 */
+                initStatus.push({
+                    x: item.position.x,
+                    y: item.position.y,
+                    z: item.position.z,
+                    cubeIndex: item.id
+                });
+                item.cubeIndex = item.id;
+                scene.add(cubes[i]);
+            }
+
+            // Create transprent square for raycasting.
+            let cubegeo = new THREE.BoxGeometry(150, 150, 150);
+            let hex = 0x000000;
+            for (let i = 0; i < cubegeo.faces.length; i++) {
+                cubegeo.faces[i].color.setHex(hex);
+            }
+            let cubemat = new THREE.MeshBasicMaterial({
+                vertexColors: THREE.FaceColors,
+                opacity: 0,
+                transparent: true
+            });
+            let cube = new THREE.Mesh(cubegeo, cubemat);
+            cube.cubeType = 'coverCube';
+            scene.add(cube);
+        }
+
+        // Render scene.
+        function render() {
+            renderer.clear();
+            renderer.render(scene, camera);
+            window.requestAnimFrame(render);
+        }
+
+        // Main function.
+        function threeStart() {
+            initRenderer();
+            initCamera();
+            initScene();
+            initLight();
+            initObject();
+            render();
+
+            // Mouse event listener.
+            renderer.domElement.addEventListener('mousedown', startCubeRotation, false);
+            renderer.domElement.addEventListener('mousemove', rotateCube, false);
+            renderer.domElement.addEventListener('mouseup', stopCubeRotation, false);
+
+            // View controller
+            controller = new THREE.OrbitControls(camera, renderer.domElement);
+            controller.target = new THREE.Vector3(0, 0, 0); // Set controller point.
+        }
+
+        function startCubeRotation(event) {
+            getIntersects(event);
+            // Start cube rotation only when the cube is not rotating and we catch the intersect.
+            if (!isRotating && intersect) {
+                startPoint = intersect.point; // set starting point of rotation.
+                controller.enabled = false;   // ignore the controller when we are rotating the cube.
+            } else {
+                controller.enabled = true; 
+            }
+        }
+
+        // Cube rotation given mouse event.
+        function rotateCube(event) {
+            getIntersects(event);
+            if (intersect) {
+                if (!isRotating && startPoint) {
+                    movePoint = intersect.point;
+                    if (!movePoint.equals(startPoint)) { // Rotated.
+                        isRotating = true;
+                        let sub = movePoint.sub(startPoint); // get rotation vector.
+                        let direction = getDirection(sub); // calculate rotation direction.
+                        let elements = getCubesToRotate(intersect, direction);
+                        let startTime = new Date().getTime();
+                        window.requestAnimFrame(function(timestamp) {
+                            rotateAnimation(elements, direction, timestamp, 0);
+                        });
+                    }
+                }
+            }
+            event.preventDefault();
+        }
+
+        function stopCubeRotation() {
+            intersect = null;
+            startPoint = null;
+        }
+
+        // Get intersection point and the face it belongs to. And the normal vector of this face.
+        function getIntersects(event) {
+            mouse.x = (event.clientX / width) * 2 - 1;
+            mouse.y = -(event.clientY / height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            // Use Raycaster to get the first element among intersected items.
+            let intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length) {
+                try {
+                    if (intersects[0].object.cubeType === 'coverCube') {
+                        intersect = intersects[1];
+                        normalize = intersects[0].face.normal;
+                    } else {
+                        intersect = intersects[0];
+                        normalize = intersects[1].face.normal;
+                    }
+                } catch (err) {
+                }
+            }
+        }
+
+        function rotateAroundWorldY(obj, rad) {
+            let x0 = obj.position.x;
+            let z0 = obj.position.z;
+            let q = new THREE.Quaternion();
+            q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rad);
+            obj.quaternion.premultiply(q);
+            // obj.rotateY(rad);
+            obj.position.x = Math.cos(rad) * x0 + Math.sin(rad) * z0;
+            obj.position.z = Math.cos(rad) * z0 - Math.sin(rad) * x0;
+        }
+
+        function rotateAroundWorldZ(obj, rad) {
+            let x0 = obj.position.x;
+            let y0 = obj.position.y;
+            let q = new THREE.Quaternion();
+            q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), rad);
+            obj.quaternion.premultiply(q);
+            //obj.rotateZ(rad);
+            obj.position.x = Math.cos(rad) * x0 - Math.sin(rad) * y0;
+            obj.position.y = Math.cos(rad) * y0 + Math.sin(rad) * x0;
+        }
+
+        function rotateAroundWorldX(obj, rad) {
+            let y0 = obj.position.y;
+            let z0 = obj.position.z;
+            let q = new THREE.Quaternion();
+            q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rad);
+            obj.quaternion.premultiply(q);
+            //obj.rotateX(rad);
+            obj.position.y = Math.cos(rad) * y0 - Math.sin(rad) * z0;
+            obj.position.z = Math.cos(rad) * z0 + Math.sin(rad) * y0;
+        }
+
+        /**
+         * Function to animate rotation.
+         */
+        function rotateAnimation(elements, direction, currentstamp, startstamp, laststamp) {
+            let totalTime = 200;
+            if (startstamp === 0) {
+                startstamp = currentstamp;
+                laststamp = currentstamp;
+            }
+            if (currentstamp - startstamp >= totalTime) { // stop animation.
+                currentstamp = startstamp + totalTime;
+                isRotating = false;
+                startPoint = null;
+                updateCubeIndex(elements);
+            }
+            switch (direction) {
+                // Clockwise around X.
+                case 1:
+                    for (let i = 0; i < elements.length; i++) {
+                        rotateAroundWorldX(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
+                    }
+                    break;
+                // Anti-Clockwise around X.
+                case 2:
+                    for (let i = 0; i < elements.length; i++) {
+                        rotateAroundWorldX(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
+                    }
+                    break;
+                // Clockwise around Y.
+                case 3:
+                    for (let i = 0; i < elements.length; i++) {
+                        rotateAroundWorldY(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
+                    }
+                    break;
+                // Anti-Clockwise around Y.
+                case 4:
+                    for (let i = 0; i < elements.length; i++) {
+                        rotateAroundWorldY(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
+                    }
+                    break;
+                // Clockwise around Z.
+                case 5:
+                    for (let i = 0; i < elements.length; i++) {
+                        rotateAroundWorldZ(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
+                    }
+                    break;
+                // Anti-Clockwise around Z.
+                case 6:
+                    for (let i = 0; i < elements.length; i++) {
+                        rotateAroundWorldZ(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / totalTime);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if (currentstamp - startstamp < totalTime) {
+                window.requestAnimFrame(function(timestamp) {
+                    rotateAnimation(elements, direction, timestamp, startstamp, currentstamp);
+                });
+            }
+        }
+
+        function updateCubeIndex(elements) {
+            for (let i = 0; i < elements.length; i++) {
+                let temp1 = elements[i];
+                for (let j = 0; j < initStatus.length; j++) {
+                    let temp2 = initStatus[j];
+                    if (Math.abs(temp1.position.x - temp2.x) <= cubeParams.len / 2 &&
+                        Math.abs(temp1.position.y - temp2.y) <= cubeParams.len / 2 &&
+                        Math.abs(temp1.position.z - temp2.z) <= cubeParams.len / 2) {
+                        temp1.cubeIndex = temp2.cubeIndex;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Function to get all atomic cubes that should be rotated
+        function getCubesToRotate(target, direction) {
+            let targetId = target.object.cubeIndex;
+            let ids = [];
+            for (let i = 0; i < cubes.length; i++) {
+                ids.push(cubes[i].cubeIndex);
+            }
+            let minId = min(ids);
+            targetId = targetId - minId;
+            let Z_Offset = parseInt(targetId / 9);
+            let Y_Offset = parseInt((targetId % 9) / 3);
+            let X_Offset = parseInt((targetId % 9) % 3);
+            let boxs = [];
+
+            switch (direction) {
+                // Around X.
+                case 1: case 2:
+                    for (let i = 0; i < cubes.length; i++) {
+                        let tempId = cubes[i].cubeIndex - minId;
+                        if (X_Offset === tempId % 9 % 3) {
+                            boxs.push(cubes[i]);
+                        }
+                    }
+                    break;
+                // Around Y.
+                case 3: case 4:
+                    for (let i = 0; i < cubes.length; i++) {
+                        let tempId = cubes[i].cubeIndex - minId;
+                        if (Y_Offset === parseInt(tempId % 9 / 3)) {
+                            boxs.push(cubes[i]);
+                        }
+                    }
+                    break;
+                // Around Z.
+                case 5: case 6:
+                    for (let i = 0; i < cubes.length; i++) {
+                        let tempId = cubes[i].cubeIndex - minId;
+                        if (Z_Offset === parseInt(tempId / 9)) {
+                            boxs.push(cubes[i]);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return boxs;
+        }
+
+        // function to get rotation direction.
+        function getDirection(vector3) {
+            let direction;
+            // calculate angle of vector to x,y,z-axis.
+            let xAngle = vector3.angleTo(xLine);
+            let xAngleR = vector3.angleTo(xLineR);
+            let yAngle = vector3.angleTo(yLine);
+            let yAngleR = vector3.angleTo(yLineR);
+            let zAngle = vector3.angleTo(zLine);
+            let zAngleR = vector3.angleTo(zLineR);
+            let minAngle = min([xAngle, xAngleR, yAngle, yAngleR, zAngle, zAngleR]);
+
+            switch (minAngle) {
+                case xAngle: // Rotate 90 degrees to the positive X.
+                    if (normalize.equals(yLine)) {
+                        direction = 5; // clockwise around Z.
+                    } else if (normalize.equals(yLineR)) {
+                        direction = 6; // anti-clockwise around Z.
+                    } else if (normalize.equals(zLine)) {
+                        direction = 4; // anti-clockwise around Y.
+                    } else {
+                        direction = 3; // clockwise around Y.
+                    }
+                    break;
+                case xAngleR: // Rotate 90 degrees to the negative X.
+                    if (normalize.equals(yLine)) {
+                        direction = 6; // anti-clockwise around Z.
+                    } else if (normalize.equals(yLineR)) {
+                        direction = 5; // clockwise around Z.
+                    } else if (normalize.equals(zLine)) {
+                        direction = 3; // clockwise around Y.
+                    } else {
+                        direction = 4; // anti-clockwise around Y.
+                    }
+                    break;
+                case yAngle: // Rotate 90 degrees to the positive Y.
+                    if (normalize.equals(zLine)) {
+                        direction = 2; // anti-clockwise around X.
+                    } else if (normalize.equals(zLineR)) {
+                        direction = 1; // clockwise around X.
+                    } else if (normalize.equals(xLine)) {
+                        direction = 6; // anti-clockwise around Z.
+                    } else {
+                        direction = 5; // clockwise around Z.
+                    }
+                    break;
+                case yAngleR: // Rotate 90 degrees to the negative Y.
+                    if (normalize.equals(zLine)) {
+                        direction = 1; // clockwise around X.
+                    } else if (normalize.equals(zLineR)) {
+                        direction = 2; // anti-clockwise around X.
+                    } else if (normalize.equals(xLine)) {
+                        direction = 5; // clockwise around Z.
+                    } else {
+                        direction = 6; // anti-clockwise around Z.
+                    }
+                    break;
+                case zAngle: // Rotate 90 degrees to the positive Z.
+                    if (normalize.equals(yLine)) {
+                        direction = 1; // clockwise around X.
+                    } else if (normalize.equals(yLineR)) {
+                        direction = 2; // anti-clockwise around X.
+                    } else if (normalize.equals(xLine)) {
+                        direction = 3; // clockwise around Y.
+                    } else {
+                        direction = 4; // anti-clockwise around Y.
+                    }
+                    break;
+                case zAngleR: // Rotate 90 degrees to the negative Z.
+                    if (normalize.equals(yLine)) {
+                        direction = 2; // anti-clockwise around X.
+                    } else if (normalize.equals(yLineR)) {
+                        direction = 1; // clockwise around X.
+                    } else if (normalize.equals(xLine)) {
+                        direction = 4; // anti-clockwise around Y.
+                    } else {
+                        direction = 3; // clockwise around Y.
+                    }
+                    break;
+                default:
+                    break;
+            }
+            // console.log(direction);
+            return direction;
+        }
+
+        // get min element in an array.
+        function min(arr) {
+            let min = arr[0];
+            for (let i = 1; i < arr.length; i++) {
+                if (arr[i] < min) {
+                    min = arr[i];
+                }
+            }
+            return min;
+        }
+    </script>
+</body>
+
+</html>

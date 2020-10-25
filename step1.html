@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Step 1 - Basic 3D Scene</title>
     <script type="text/javascript" src="./threejs/three.js"></script>
+    <script type="text/javascript" src="./threejs/controls/OrbitControls.js"></script>
     <link rel="stylesheet" href="./reset.import.css">
     <style type="text/css">
         div#canvas-frame {
@@ -61,6 +62,10 @@
             camera.position.set(200, 400, 600);
             camera.up.set(0, 1, 0);
             camera.lookAt(origPoint);
+
+            // View controller.
+            controller = new THREE.OrbitControls(camera, renderer.domElement);
+            controller.target = origPoint; // Set controller point.
         }
 
         // Create Scene.
@@ -115,7 +120,7 @@
 
 
             const geometry = new THREE.BoxGeometry(100, 100, 100);
-            const material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+            const material = new THREE.MeshBasicMaterial({color: 0x00ffff});
             const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
         }
