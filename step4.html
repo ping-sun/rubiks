@@ -31,6 +31,7 @@
         let startPoint;
         let movePoint;
         let initStatus = [];
+
         const origin = new THREE.Vector3(0, 0, 0);
 
         // Six possible rotation directions.
@@ -99,7 +100,7 @@
         };
 
         /**
-         * Simple Rubik's Cube.
+         * Create a simple Rubik's Cube.
          * @param (x,y,z): the center point.
          * @apram num: the level of the cube.
          * @param len: the length of each atmoic cube component.
@@ -257,7 +258,6 @@
                         let sub = movePoint.sub(startPoint); // get rotation vector.
                         let direction = getDirection(sub); // calculate rotation direction.
                         let elements = getCubesToRotate(intersect, direction);
-                        let startTime = new Date().getTime();
                         window.requestAnimFrame(function(timestamp) {
                             rotateAnimation(elements, direction, timestamp, 0);
                         });
