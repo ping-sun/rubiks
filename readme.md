@@ -6,7 +6,7 @@ The current implementation progress:
 - [x] Basic 3-Level Rubik's Cube.
 - [x] Orbit Control to support moving view points.
 - [x] Cube rotation on mouse event.
-- [ ] Cube Shuffling.
-- [ ] Automatic solving the Rubik's Cube.
+- [x] Cube Shuffling.
+- [x] Automatic solver(LBL) for the Rubik's Cube.
 - [ ] More efficient algorithm.
 - [ ] Follow-up: Timer, Step Counter.
