@@ -8,5 +8,5 @@ The current implementation progress:
 - [x] Cube rotation on mouse event.
 - [x] Cube Shuffling.
 - [x] Automatic solver(LBL) for the Rubik's Cube.
-- [ ] More efficient algorithm.
-- [ ] Follow-up: Timer, Step Counter.
+- [x] More efficient algorithm: CFOP implemented in Python.
+- [x] Communication between Python and HTML via Flask.
