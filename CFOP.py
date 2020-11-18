@@ -697,17 +697,58 @@ def efficient(sol):
             i += 1
 
 def CFOP(cube):
+    print("CFOP INPUT: ", cube)
+    print()
+    if len(cube) != 6:
+        return "INVALID CUBE"
     f = first_layer(cube)
     s = second_layer(cube)
     t = third_layer(cube)
     res = [[],[],[]]
     if type(f) == str or type(s) == str or type(t) == str:
+        print("Bad Cube")
         return res
     else:
         efficient(f)
         efficient(s)
         efficient(t)
-        return [f,s,t]
+        res = [f,s,t]
+        convertSolution(res)
+        return res
+
+def convertSolution(steps):
+    for i, step in enumerate(steps[0]):
+        steps[0][i] = convert(step)
+    for i, step in enumerate(steps[1]):
+        steps[1][i] = convert(step)
+    for i, step in enumerate(steps[2]):
+        steps[2][i] = convert(step)
+
+def convert(step):
+    if step == "b":
+        return "U"
+    if step == "b'":
+        return "u"
+    if step == "f":
+        return "D"
+    if step == "f'":
+        return "d"
+    if step == "d":
+        return "B"
+    if step == "d'":
+        return "b"
+    if step == "u":
+        return "F"
+    if step == "u'":
+        return "f"
+    if step == "l":
+        return "L"
+    if step == "l'":
+        return "l"
+    if step == "r":
+        return "R"
+    if step == "r'":
+        return "r"
 
 if __name__ == "__main__":
     # cube=[]
@@ -720,6 +761,7 @@ if __name__ == "__main__":
         ["o", "o", "o", "o", "o", "o", "o", "o", "o"],
         ["b", "w", "w", "b", "w", "w", "b", "w", "w"],
     ]
+    print(len(cube))
     sol = CFOP(cube)
     print(len(sol[0]), sol[0])
     print()
