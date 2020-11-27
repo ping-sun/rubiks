@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=index,viewport-fit=cover">
+    <title>Step 7 - Indicator</title>
+    <script type="text/javascript" src="/threejs/three.js"></script>
+    <script type="text/javascript" src="/threejs/controls/OrbitControls.js"></script>
+    <script type="text/javascript" src="/jquery.js"></script>
+    <script type="text/javascript" src="/utils.js"></script>
+    <script type="text/javascript" src="/LBL.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <style type="text/css">
+        div#canvas-frame {
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+
+        div#timerDIV {
+            position: absolute;
+            width: 100;
+            height: 100;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: sans-serif;
+            top: 10%;
+            left: 5%;
+        }
+
+        div#timerDIV #timerVal {
+            font-size: 30px;
+        }
+
+        div#stepCounterDIV {
+            position: absolute;
+            width: 100;
+            height: 100;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: sans-serif;
+            top: 20%;
+            left: 5%;
+        }
+
+        div#stepCounterDIV #stepCounterVal {
+            font-size: 30px;
+        }
+
+        div#sliderDIV {
+            position: absolute;
+            width: 100;
+            height: 100;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: sans-serif;
+            top: 30%;
+            left: 5%;
+        }
+
+        div#sliderDIV #sliderVal {
+            font-size: 30px;
+        }
+
+        .btn-list {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            top: 40%;
+            left: 5%;
+        }
+
+        button {
+            font-size: 20px;
+            margin: 10px 0 0 10px;
+            border: 1px solid #d1d1d1;
+            background-color: #fff;
+        }
+
+        p {
+            color: #ff0000;
+            margin: 5px 0 0 5px;
+        }
+
+        .cube-serialize {
+            position: absolute;
+            top: 60%;
+            left: 85%;
+            display: grid;
+            grid-template-rows: 54px 54px 54px 54px;
+            grid-template-columns: 54px 54px 54px;
+        }
+
+        .face {
+            display: grid;
+            margin: auto;
+            grid-template-rows: 16px 16px 16px;
+            grid-template-columns: 16px 16px 16px;
+
+        }
+
+        .unit-cube {
+            background: #eee;
+            border: 1px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body onload="threeStart();">
+    <div class="cube-serialize">
+        <div class="face"></div>
+        <div class="face" id="UFace"></div>
+        <div class="face"></div>
+        <div class="face" id="LFace"></div>
+        <div class="face" id="FFace"></div>
+        <div class="face" id="RFace"></div>
+        <div class="face"></div>
+        <div class="face" id="DFace"></div>
+        <div class="face"></div>
+        <div class="face"></div>
+        <div class="face" id="BFace"></div>
+        <div class="face"></div>
+    </div>
+    <ul class="btn-list">
+        <li>
+            <button id="easyShuffleButton" class="w3-btn w3-green">Easy</button>
+            <button id="shuffleButton" class="w3-btn w3-red">Hard</button>
+        </li>
+        <li>
+            <button id="LBLButton" class="w3-btn w3-orange">LBL</button>
+            <button id="CFOPButton" class="w3-btn w3-yellow">CFOP</button>
+        </li>
+        <li>
+            <button id="resetButton" class="w3-btn w3-blue">reset</button>
+            <button id="spriteHideButton" class="w3-btn w3-gray">Hide</button>
+        </li>
+    </ul>
+    <div id="sliderDIV">sec/rotation
+        <input id="slider" type="range" min="100" max="2000" step="100" value="300" oninput="sliderChange(this.value)">
+        <div id="sliderVal">300ms</div>
+    </div>
+    <div id="timerDIV">time
+        <div id="timerVal">
+            00:00:000
+        </div>
+    </div>
+    <div id="stepCounterDIV">step
+        <div id="stepCounterVal">
+            0
+        </div>
+    </div>
+    <div id="canvas-frame"></div>
+    <script>
+        let width;
+        let height;
+        let renderer;
+
+        let raycaster = new THREE.Raycaster(); // ray caster helps detect intersection.
+        let mouse = new THREE.Vector2();
+        let isRotating = false;
+        let isMouseDown = false;
+        let isSprite = null;
+        let intersect;
+        let normalize;
+        let startPoint;
+        let movePoint;
+        let initStatus = [];
+        let minCubeIndex;
+
+        let startFaceNo = 0;
+        let currentFaceNo = 0;
+        let endFaceNo = 3;
+        let isAutoSolver = false;
+
+        let stepNum = 0;
+        let isShuffle = false;
+        let isSpriteHiden = false;
+        let timePerRotation = 300;
+        let allowSliderChange = true;
+
+        // Six possible rotation directions.
+        const XLine = new THREE.Vector3(1, 0, 0); // X
+        const XLineR = new THREE.Vector3(-1, 0, 0); // Anti-X
+        const YLine = new THREE.Vector3(0, 1, 0); // Y
+        const YLineR = new THREE.Vector3(0, -1, 0); // Anti-Y
+        const ZLine = new THREE.Vector3(0, 0, 1); // Z
+        const ZLineR = new THREE.Vector3(0, 0, -1); // Anti-Z
+
+        const cubeParams = { // cube arguments.
+            x: 0,
+            y: 0,
+            z: 0,
+            num: 3,
+            len: 50,
+            // [right, left, up, down, front, back]
+            colors: ['red', 'orange', 'yellow', 'white', 'blue', 'green']
+        };
+
+        window.requestAnimFrame = (function() { // need requestAnimationFrame to refresh frame
+            return window.requestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.msRequestAnimationFrame ||
+                window.webkitRequestAnimationFrame;
+        })();
+
+
+        // Timer
+        let $timerVal = document.getElementById('timerVal');
+        console.log($timerVal);
+        let timerEnabled = false;
+        let lastTime = new Date();
+        setInterval(myTimer, 30);
+
+        function myTimer() {
+            let curTime = new Date();
+            if (timerEnabled) {
+                serializedRubiksCube = serializeCube();
+                if (isSolved(serializedRubiksCube)) {
+                    return;
+                }
+                let diff = curTime - lastTime;
+                m = Math.floor(diff / 1000 / 60 % 60);
+                s = Math.floor(diff / 1000 % 60);
+                ms = Math.floor(diff % 1000);
+                if (ms < 100) ms = "0" + ms;
+                if (s < 10) s = "0" + s;
+                if (m < 10) m = "0" + m;
+
+                $timerVal.innerHTML = m + ":" + s + ":" + ms;
+            } else {
+                $timerVal.innerHTML = "00:00:000";
+            }
+        }
+
+        let $stepCounterVal = document.getElementById('stepCounterVal');
+        updateStepCounter();
+
+        function updateStepCounter() {
+            $stepCounterVal.innerHTML = stepNum;
+        }
+
+        // Slider
+        function sliderChange(val) {
+            if (allowSliderChange) {
+                timePerRotation = parseInt(val);
+                let $sliderVal = document.getElementById('sliderVal');
+                $sliderVal.innerHTML = timePerRotation + "ms";
+            }
+        }
+
+        // Create Renderer with given width and height.
+        let $frame = document.getElementById('canvas-frame');
+        let $timerDIV = document.getElementById('timerDIV');
+        let $stepCounterDIV = document.getElementById('stepCounterDIV');
+
+        function initRenderer() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setSize(width, height);
+            renderer.setClearColor(0xFFFFFF, 1.0);
+            $frame.appendChild(renderer.domElement);
+            $frame.appendChild($timerDIV);
+            $frame.appendChild($stepCounterDIV);
+        }
+
+        // Create camera. Set direction and position.
+        let camera;
+        let controller; // View Controller.
+        let viewCenter = new THREE.Vector3(0, 0, 0);
+
+        function initCamera() {
+            camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+            camera.position.set(0, 0, 600);
+            camera.up.set(0, 1, 0);
+            camera.lookAt(viewCenter);
+        }
+
+        // Create Scene.
+        let scene;
+
+        function initScene() {
+            scene = new THREE.Scene();
+        }
+
+        // Create ambient light.
+        let light;
+
+        function initLight() {
+            light = new THREE.AmbientLight(0xfefefe);
+            scene.add(light);
+        }
+
+        // Create objects in the scene.
+
+        let sprites = [];
+
+        // Function to create Sprite direction indicators.
+        function createSprites() {
+            const letterF = new THREE.TextureLoader().load('img/f.svg');
+            const letterB = new THREE.TextureLoader().load('img/b.svg');
+            const letterL = new THREE.TextureLoader().load('img/l.svg');
+            const letterR = new THREE.TextureLoader().load('img/r.svg');
+            const letterU = new THREE.TextureLoader().load('img/u.svg');
+            const letterD = new THREE.TextureLoader().load('img/d.svg');
+            const letters = [letterR, letterL, letterU, letterD, letterF, letterB];
+
+            const svgClockwise = new THREE.TextureLoader().load('img/clock.svg');
+            const svgCounterclockwise = new THREE.TextureLoader().load('img/counterclock.svg');
+            const clockwiseMaterial = new THREE.SpriteMaterial({
+                map: svgClockwise,
+                color: 0xffffff
+            });
+            const counterclockwiseMaterial = new THREE.SpriteMaterial({
+                map: svgCounterclockwise,
+                color: 0xffffff
+            });
+            for (let i = 0; i < 6; i++) {
+                const letterMaterial = new THREE.SpriteMaterial({
+                    map: letters[i],
+                    color: 0xffffff
+                });
+                const letterSprite = new THREE.Sprite(letterMaterial);
+                const clockwiseSprite = new THREE.Sprite(clockwiseMaterial);
+                const counterclockwiseSprite = new THREE.Sprite(counterclockwiseMaterial);
+
+                letterSprite.scale.set(20, 20, 1);
+                clockwiseSprite.scale.set(20, 20, 1);
+                counterclockwiseSprite.scale.set(20, 20, 1);
+
+                // [right, left, up, down, front, back]
+                let offset = 300;
+                let x = 0,
+                    y = 0,
+                    z = 0;
+                if (i == 0) x = offset;
+                if (i == 1) x = -offset;
+                if (i == 2) y = offset;
+                if (i == 3) y = -offset;
+                if (i == 4) z = offset;
+                if (i == 5) z = -offset;
+                letterSprite.position.set(x, y, z);
+                counterclockwiseSprite.position.set(x - 20, y, z);
+                clockwiseSprite.position.set(x + 20, y, z);
+
+                clockwiseSprite.spriteType = i + 1;
+                counterclockwiseSprite.spriteType = i + 7;
+
+                sprites.push(letterSprite);
+                sprites.push(clockwiseSprite);
+                sprites.push(counterclockwiseSprite);
+
+                scene.add(letterSprite);
+                scene.add(clockwiseSprite);
+                scene.add(counterclockwiseSprite);
+            }
+        }
+
+        let planes = [];
+
+        function createFrames() {
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 'black'
+            });
+
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-100, 100, 100), new THREE.Vector3(-100, 100, 50)]), lineMat));
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-100, 100, 100), new THREE.Vector3(-100, 50, 100)]), lineMat));
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-100, 100, 100), new THREE.Vector3(-50, 100, 100)]), lineMat));
+
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(100, -100, -100), new THREE.Vector3(100, -100, -50)]), lineMat));
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(100, -100, -100), new THREE.Vector3(100, -50, -100)]), lineMat));
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(100, -100, -100), new THREE.Vector3(50, -100, -100)]), lineMat));
+
+            const planeGeo = new THREE.PlaneGeometry(200, 200, 1);
+            for (let i = 0; i < 6; i++) {
+                const planeMat = new THREE.MeshBasicMaterial({
+                    color: cubeParams.colors[i],
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const plane = new THREE.Mesh(planeGeo, planeMat);
+                if (i == 0) {
+                    plane.position.x = 100;
+                    plane.lookAt(XLine);
+                }
+                if (i == 1) {
+                    plane.position.x = -100;
+                    plane.lookAt(XLineR);
+                }
+                if (i == 2) {
+                    plane.position.y = 100;
+                    plane.lookAt(YLine);
+                }
+                if (i == 3) {
+                    plane.position.y = -100;
+                    plane.lookAt(YLineR);
+                }
+                if (i == 4) {
+                    plane.position.z = 100;
+                    plane.lookAt(ZLine);
+                }
+                if (i == 5) {
+                    plane.position.z = -100;
+                    plane.lookAt(ZLineR);
+                }
+                planes[i] = plane;
+                scene.add(plane);
+            }
+        }
+
+        function hideFrames() {
+            for (let i = 0; i < planes.length; i++) {
+                planes[i].visible = false;
+            }
+        }
+
+        let cubes;
+        let serializedRubiksCube;
+
+        // Function to create texture for a face of the atmoic cube on canvas.
+        function createFace(rgbaColor) {
+            let canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            let context = canvas.getContext('2d');
+            if (context) {
+                // Background: 256*256 square.
+                context.fillStyle = 'rgba(0,0,0,1)';
+                context.fillRect(0, 0, 256, 256);
+                // Inner colored context: 224*224 rounded square with 16px padding. 
+                context.rect(16, 16, 224, 224);
+                context.lineJoin = 'round';
+                context.lineWidth = 16;
+                context.fillStyle = rgbaColor;
+                context.strokeStyle = rgbaColor;
+                context.stroke();
+                context.fill();
+            } else {
+                alert('The browser does not support viewing this Canvas.\n');
+            }
+            return canvas;
+        }
+
+        /**
+         * Simple Rubik's Cube.
+         * @param (x,y,z): the center point.
+         * @apram num: the level of the cube.
+         * @param len: the length of each atmoic cube component.
+         * @param colors: colors of six faces.
+         */
+        function createCubeArray(x, y, z, num, len, colors) {
+            // Upper left vertice position.
+            const UpLeftX = x - num / 2 * len;
+            const UpLeftY = y + num / 2 * len;
+            const UpLeftZ = z + num / 2 * len;
+            const gray = 'rgba(25,25,25,1)';
+
+            let cubeArray = [];
+            for (let Z = 0; Z < num; Z++) {
+                for (let Y = 0; Y < num; Y++) {
+                    for (let X = 0; X < num; X++) {
+                        let cubegeo = new THREE.BoxGeometry(len, len, len);
+                        let materialArr = [];
+                        for (let c = 0; c < colors.length; c++) {
+                            let color = colors[c];
+                            if (c == 0 && X != 2) color = gray;
+                            if (c == 1 && X != 0) color = gray;
+                            if (c == 2 && Y != 0) color = gray;
+                            if (c == 3 && Y != 2) color = gray;
+                            if (c == 4 && Z != 0) color = gray;
+                            if (c == 5 && Z != 2) color = gray;
+                            let texture = new THREE.Texture(createFace(color));
+                            texture.needsUpdate = true;
+                            let material = new THREE.MeshLambertMaterial({
+                                map: texture
+                            });
+                            materialArr.push(material);
+                        }
+                        let cube = new THREE.Mesh(cubegeo, materialArr);
+
+                        // Centers of atomic cube components.
+                        cube.position.x = (UpLeftX + len / 2) + X * len;
+                        cube.position.y = (UpLeftY - len / 2) - Y * len;
+                        cube.position.z = (UpLeftZ - len / 2) - Z * len;
+                        cubeArray.push(cube);
+                    }
+                }
+            }
+            return cubeArray;
+        }
+
+        function createRubiksCube() {
+            // Create simple cube.
+            cubes = createCubeArray(cubeParams.x, cubeParams.y, cubeParams.z, cubeParams.num, cubeParams.len, cubeParams.colors);
+            let ids = [];
+            initStatus = [];
+            for (let i = 0; i < cubes.length; i++) {
+                let item = cubes[i];
+                /**
+                 * Since we are using item.id to select moving items, we need to set an extra dynamic cubeIndex.
+                 * Update cubeIndex after rotation according to the init status.
+                 */
+                initStatus.push({
+                    x: item.position.x,
+                    y: item.position.y,
+                    z: item.position.z,
+                    cubeIndex: item.id
+                });
+                item.cubeIndex = item.id;
+                ids.push(item.id);
+                scene.add(cubes[i]);
+            }
+            minCubeIndex = min(ids).value;
+        }
+
+        function createCoverCubes() {
+            // Create transprent square for raycasting.
+            let cubegeo = new THREE.BoxGeometry(150, 150, 150);
+            let hex = 0x000000;
+            for (let i = 0; i < cubegeo.faces.length; i++) {
+                cubegeo.faces[i].color.setHex(hex);
+            }
+            let cubemat = new THREE.MeshBasicMaterial({
+                vertexColors: THREE.FaceColors,
+                opacity: 0,
+                transparent: true
+            });
+            let cube = new THREE.Mesh(cubegeo, cubemat);
+            cube.cubeType = 'coverCube';
+            scene.add(cube);
+        }
+
+        function initObject() {
+            createSprites();
+            createFrames();
+            createRubiksCube();
+            createCoverCubes();
+        }
+
+        // Create 2D serialized Rubik's Cube.
+        let cubes2D = [];
+        const colorMap = {
+            "o": "orange",
+            "r": "red",
+            "y": "yellow",
+            "g": "green",
+            "b": "blue",
+            "w": "white"
+        };
+
+        function create2DSerializedCube() {
+            const ids = ["FFace", "DFace", "RFace", "UFace", "LFace", "BFace"];
+            for (let i = 0; i < 6; i++) {
+                let face = document.getElementById(ids[i]);
+                let boxes = [];
+                for (let j = 0; j < 9; j++) {
+                    let box = document.createElement('div');
+                    box.setAttribute("class", "unit-cube");
+                    face.appendChild(box);
+                    boxes.push(box);
+                }
+                cubes2D.push(boxes);
+            }
+        }
+
+        const convertMatrix = [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8],
+            [6, 3, 0, 7, 4, 1, 8, 5, 2],
+            [8, 7, 6, 5, 4, 3, 2, 1, 0],
+            [2, 5, 8, 1, 4, 7, 0, 3, 6],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        ];
+
+        function update2DSerializedCube(serializedRubiksCube) {
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 9; j++) {
+                    cubes2D[i][convertMatrix[i][j]].style.backgroundColor = colorMap[serializedRubiksCube[i][j]];
+                }
+            }
+        }
+
+        function init2DSerializedCube() {
+            create2DSerializedCube();
+            serializedRubiksCube = serializeCube();
+            update2DSerializedCube(serializedRubiksCube);
+        }
+        // Render scene.
+        function render() {
+            renderer.clear();
+            renderer.render(scene, camera);
+            window.requestAnimFrame(render);
+        }
+
+        // Main function.
+        function threeStart() {
+            initRenderer();
+            initCamera();
+            initScene();
+            initLight();
+            initObject();
+            init2DSerializedCube();
+            render();
+
+            // Mouse event listener.
+            renderer.domElement.addEventListener('mousedown', startCubeRotation, false);
+            renderer.domElement.addEventListener('mousemove', rotateCube, false);
+            renderer.domElement.addEventListener('mouseup', stopCubeRotation, false);
+
+            // View controller.
+            controller = new THREE.OrbitControls(camera, renderer.domElement);
+            controller.target = new THREE.Vector3(0, 0, 0); // Set controller point.
+
+            // Shuffle [0-10] steps.
+            let $easyShuffleButton = document.querySelector('#easyShuffleButton');
+            $easyShuffleButton.addEventListener('click', function() {
+                hideFrames();
+                timerEnabled = false;
+                lastTime = new Date();
+                stepNum = 0;
+                updateStepCounter();
+
+                shuffle(0, 10);
+            }, false);
+
+            // Shuffle [10-20] steps.
+            let $shuffleButton = document.querySelector('#shuffleButton');
+            $shuffleButton.addEventListener('click', function() {
+                hideFrames();
+                timerEnabled = false;
+                lastTime = new Date();
+                stepNum = 0;
+                updateStepCounter();
+
+                shuffle(10, 10);
+            }, false);
+
+            // reset.
+            let $resetButton = document.querySelector('#resetButton');
+            $resetButton.addEventListener('click', function() {
+                if (isShuffle || isAutoSolver) return;
+                timerEnabled = false;
+                isAutoSolver = false;
+                stepNum = 0;
+                updateStepCounter();
+                for (let i = 0; i < 27; i++) {
+                    let cube = getCubeByIndex(i);
+                    scene.remove(cube);
+                }
+                createRubiksCube();
+            }, false);
+
+            let $spriteHideButton = document.querySelector('#spriteHideButton');
+            $spriteHideButton.addEventListener('click', function() {
+                isSpriteHiden = !isSpriteHiden;
+                if (isSpriteHiden) {
+                    $spriteHideButton.innerHTML = "show";
+                    for (let i = 0; i < sprites.length; i++) {
+                        sprites[i].visible = false;
+                    }
+                } else {
+                    $spriteHideButton.innerHTML = "hide";
+                    for (let i = 0; i < sprites.length; i++) {
+                        sprites[i].visible = true;
+                    }
+                }
+            }, false);
+
+
+            // CFOP Solver.
+            let $CFOPButton = document.querySelector('#CFOPButton');
+            $CFOPButton.addEventListener('click', function() {
+                CFOPSolver(serializedRubiksCube);
+            }, false);
+
+            // LBL Solver.
+            let $LBLButton = document.querySelector('#LBLButton');
+            $LBLButton.addEventListener('click', function() {
+                LBLSolver();
+            }, false);
+        }
+
+        /*** Rubiks Solver Functions **/
+
+        // Function to request CFOP algorithm.
+        function CFOPSolver(serializedRubiksCube) {
+            if (isShuffle) return;
+            serializedRubiksCube = serializeCube()
+            console.log("serialized rubik's cube: ", serializedRubiksCube);
+            if (isSolved(serializedRubiksCube)) return;
+
+            $.ajax({
+                type: "POST",
+                url: 'CFOP',
+                data: "cube=" + serializedRubiksCube,
+                success: function(solution) {
+                    console.log("CFOP Solution: ", solution)
+                    console.log("STEP 1: ", solution[0])
+                    console.log("STEP 2: ", solution[1])
+                    console.log("STEP 3: ", solution[2])
+
+                    if (!isRotating && !isAutoSolver) {
+                        isAutoSolver = true;
+                        let stepArr = [];
+                        const funcMap = {
+                            "R": 0,
+                            "U": 1,
+                            "F": 2,
+                            "B": 3,
+                            "L": 4,
+                            "D": 5,
+                            "r": 6,
+                            "u": 7,
+                            "f": 8,
+                            "b": 9,
+                            "l": 10,
+                            "d": 11
+                        };
+                        for (let i = 0; i < 3; i++) {
+                            for (let j = 0; j < solution[i].length; j++) {
+                                stepArr.push(funcArr[funcMap[solution[i][j]]]);
+                            }
+                        }
+                        runMethodAtIndex(stepArr, 0, 0, function() {
+                            isAutoSolver = false;
+                        });
+                    }
+                }
+            });
+        }
+
+
+        // Function to request LBL algorithm.
+        let curLBLstep = 1;
+        let topColor;
+        let buttomColor;
+
+        function LBLSolver() {
+            if (isShuffle) return;
+            serializedRubiksCube = serializeCube();
+            if (isSolved(serializedRubiksCube)) return;
+            if (!step1Finished() && !isRotating) {
+                console.log('start LBL Solver');
+                isAutoSolver = true;
+                let topCenter = getCubeByIndex(10);
+                topColor = getFaceColorByVector(topCenter, YLine);
+                buttomColor = getOppositeColor(topColor);
+                step1();
+            } else {
+                console.log('already reset');
+            }
+        }
+    </script>
+</body>
+
+</html>

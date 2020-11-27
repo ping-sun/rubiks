@@ -6,7 +6,7 @@ app = Flask(__name__, template_folder="", static_folder="static", static_url_pat
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('step6.html')
+    return render_template('index.html')
 
 @app.route('/CFOP', methods=['GET', 'POST'])
 def solution():
