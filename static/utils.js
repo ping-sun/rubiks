@@ -498,10 +498,8 @@ function rotateAnimation(elements, direction, currentstamp, startstamp, laststam
         update2DSerializedCube(serializedRubiksCube);
         if (callback) {
             callback();
-            allowSliderChange = true;
         } else {
             if (isAutoSolver) {
-                console.log("switch:", curLBLstep);
                 switch (curLBLstep) {
                     case 1:
                         step1();
@@ -532,6 +530,7 @@ function rotateAnimation(elements, direction, currentstamp, startstamp, laststam
                 }
             }
         }
+        allowSliderChange = true;
     }
 }
 
