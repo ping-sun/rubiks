@@ -78,13 +78,14 @@
         let mouse = new THREE.Vector2();
         let isRotating = false;
         let isMouseDown = false;
-        let isSprite = null;
+
         let intersect;
         let normalize;
         let startPoint;
         let movePoint;
         let initStatus = [];
         let minCubeIndex;
+        let spriteType = null;
 
         let startFaceNo = 0;
         let currentFaceNo = 0;
@@ -227,6 +228,7 @@
             const letterU = new THREE.TextureLoader().load('img/u.svg');
             const letterD = new THREE.TextureLoader().load('img/d.svg');
             const letters = [letterR, letterL, letterU, letterD, letterF, letterB];
+            const faces = ['R', 'L', 'U', 'D', 'F', 'B'];
 
             const svgClockwise = new THREE.TextureLoader().load('img/clock.svg');
             const svgCounterclockwise = new THREE.TextureLoader().load('img/cclock.svg');
@@ -266,6 +268,7 @@
                 counterclockwiseSprite.position.set(x - 20, y, z);
                 clockwiseSprite.position.set(x + 20, y, z);
 
+                letterSprite.spriteType = faces[i];
                 clockwiseSprite.spriteType = i + 1;
                 counterclockwiseSprite.spriteType = i + 7;
 

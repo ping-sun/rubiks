@@ -326,14 +326,48 @@ function getIntersects(event) {
     }
 }
 
+function changeCameraPos(spriteType) {
+    // [right, left, up, down, front, back]
+    if (spriteType == 'R') {
+        camera.position.set(1000, 0, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'L') {
+        camera.position.set(-1000, 0, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'U') {
+        camera.position.set(0, 1000, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'D') {
+        camera.position.set(0, -1000, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'F') {
+        camera.position.set(0, 0, 1000);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'B') {
+        camera.position.set(0, 0, -1000);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+}
+
 function startCubeRotation(event) {
     getIntersects(event);
     // Start cube rotation only when the cube is not rotating and we catch the intersect.
     if (!isRotating && intersect) {
         if (intersect.object.type == "Sprite") { // click sprite
-            isSprite = intersect.object.spriteType;
+            spriteType = intersect.object.spriteType;
         } else { // rotation
-            isSprite = null;
+            spriteType = null;
             startPoint = intersect.point; // set starting point of rotation.
         }
         controller.enabled = false; // ignore the controller when we are rotating the cube.
@@ -372,9 +406,9 @@ function stopCubeRotation() {
     intersect = null;
     startPoint = null;
     isMouseDown = false;
-    if (isSprite) {
-        let toRotate = isSprite;
-        isSprite = null;
+    if (spriteType) {
+        let toRotate = spriteType;
+        spriteType = null;
         if (toRotate == 1) R();
         if (toRotate == 2) L();
         if (toRotate == 3) U();
@@ -387,7 +421,7 @@ function stopCubeRotation() {
         if (toRotate == 10) d();
         if (toRotate == 11) f();
         if (toRotate == 12) b();
-
+        changeCameraPos(toRotate);
     }
 }
 /**************************** Mouse Event Finished *****************************/
