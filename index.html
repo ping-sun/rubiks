@@ -4,31 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=index,viewport-fit=cover">
-    <title>Step 7 - Indicator</title>
-    <script type="text/javascript" src="/threejs/three.js"></script>
-    <script type="text/javascript" src="/threejs/controls/OrbitControls.js"></script>
-    <script type="text/javascript" src="/jquery.js"></script>
-    <script type="text/javascript" src="/utils.js"></script>
-    <script type="text/javascript" src="/LBL.js"></script>
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link rel="stylesheet" href="/local.css">
+    <title>Rubik's Cube</title>
+    <script type="text/javascript" src="threejs/three.js"></script>
+    <script type="text/javascript" src="threejs/controls/OrbitControls.js"></script>
+    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript" src="utils.js"></script>
+    <script type="text/javascript" src="LBL.js"></script>
+    <link rel="icon" href="img/logo.png">
+    <link rel="stylesheet" href="w3.css">
+    <link rel="stylesheet" href="local.css">
 </head>
 
 <body onload="threeStart();">
+    <div id="titleDIV">
+        Rubik's Cube
+    </div>
 
-    <div class="desc" id="timerDIV">TIME
+    <div class="desc" id="timerDIV">Time
         <div class="val" id="timerVal">
             00:00:000
         </div>
     </div>
 
-    <div class="desc" id="stepCounterDIV">STEP
+    <div class="desc" id="stepCounterDIV">Step
         <div class="val" id="stepCounterVal">
             0
         </div>
     </div>
     
-    <div class="desc" id="sliderDIV">SPEED
+    <div class="desc" id="sliderDIV">Speed
         <input id="slider" type="range" min="100" max="2000" step="100" value="300" oninput="sliderChange(this.value)">
         <div class="val" id="sliderVal">
             300ms
@@ -44,13 +48,13 @@
         <li style="margin:25px 0">
             <div class="buttondesc">Solver</div>
             <button id="LBLButton" class="w3-btn w3-orange">LBL</button>
-            <button id="CFOPButton" class="w3-btn w3-yellow">CFOP</button>
+            <button id="CFOPButton" class="w3-btn w3-purple">CFOP</button>
         </li>
         <li>
             <div class="buttondesc">Tools</div>
             <button id="resetButton" class="w3-btn w3-blue">Reset</button>
-            <button id="spriteHideButton" class="w3-btn w3-gray">Hide</button>
-            <button id="pauseButton" class="w3-btn w3-gray">Pause</button>
+            <button id="spriteHideButton" class="w3-btn w3-white w3-border w3-border-black">Hide</button>
+            <button id="pauseButton" class="w3-btn w3-yellow">Pause</button>
         </li>
     </ul>
 
@@ -233,7 +237,7 @@
             const faces = ['R', 'L', 'U', 'D', 'F', 'B'];
 
             const svgClockwise = new THREE.TextureLoader().load('img/clock.svg');
-            const svgCounterclockwise = new THREE.TextureLoader().load('img/cclock.svg');
+            const svgCounterclockwise = new THREE.TextureLoader().load('img/counterclock.svg');
             const clockwiseMaterial = new THREE.SpriteMaterial({
                 map: svgClockwise,
                 color: 0xffffff

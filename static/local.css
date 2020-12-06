@@ -13,6 +13,14 @@ div#canvas-frame {
 .val {
     font-size: 30px;
 }
+#titleDIV {
+    position: absolute;
+    top: 2%;
+    left: 5%;
+    font-size: 48px;
+    font-weight: bold;
+    font-family: sans-serif;
+}
 #timerDIV {
     top: 10%;
 }

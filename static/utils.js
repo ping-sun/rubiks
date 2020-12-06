@@ -334,40 +334,6 @@ function getIntersects(event) {
     }
 }
 
-function changeCameraPos(spriteType) {
-    // [right, left, up, down, front, back]
-    if (spriteType == 'R') {
-        camera.position.set(1000, 0, 0);
-        camera.up.set(0, 1, 0);
-        camera.lookAt(viewCenter);
-    }
-    if (spriteType == 'L') {
-        camera.position.set(-1000, 0, 0);
-        camera.up.set(0, 1, 0);
-        camera.lookAt(viewCenter);
-    }
-    if (spriteType == 'U') {
-        camera.position.set(0, 1000, 0);
-        camera.up.set(0, 1, 0);
-        camera.lookAt(viewCenter);
-    }
-    if (spriteType == 'D') {
-        camera.position.set(0, -1000, 0);
-        camera.up.set(0, 1, 0);
-        camera.lookAt(viewCenter);
-    }
-    if (spriteType == 'F') {
-        camera.position.set(0, 0, 1000);
-        camera.up.set(0, 1, 0);
-        camera.lookAt(viewCenter);
-    }
-    if (spriteType == 'B') {
-        camera.position.set(0, 0, -1000);
-        camera.up.set(0, 1, 0);
-        camera.lookAt(viewCenter);
-    }
-}
-
 function startCubeRotation(event) {
     getIntersects(event);
     // Start cube rotation only when the cube is not rotating and we catch the intersect.
@@ -408,6 +374,40 @@ function rotateMove(target, vector, callback) {
     window.requestAnimFrame(function(timestamp) {
         rotateAnimation(elements, direction, 0, timestamp, null, 0, callback);
     });
+}
+
+function changeCameraPos(spriteType) {
+    // [right, left, up, down, front, back]
+    if (spriteType == 'R') {
+        camera.position.set(1000, 0, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'L') {
+        camera.position.set(-1000, 0, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'U') {
+        camera.position.set(0, 1000, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'D') {
+        camera.position.set(0, -1000, 0);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'F') {
+        camera.position.set(0, 0, 1000);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
+    if (spriteType == 'B') {
+        camera.position.set(0, 0, -1000);
+        camera.up.set(0, 1, 0);
+        camera.lookAt(viewCenter);
+    }
 }
 
 function stopCubeRotation() {
