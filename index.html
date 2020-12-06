@@ -16,19 +16,19 @@
 
 <body onload="threeStart();">
 
-    <div class="desc" id="timerDIV">time
+    <div class="desc" id="timerDIV">TIME
         <div class="val" id="timerVal">
             00:00:000
         </div>
     </div>
 
-    <div class="desc" id="stepCounterDIV">step
+    <div class="desc" id="stepCounterDIV">STEP
         <div class="val" id="stepCounterVal">
             0
         </div>
     </div>
     
-    <div class="desc" id="sliderDIV">duration/rotation
+    <div class="desc" id="sliderDIV">SPEED
         <input id="slider" type="range" min="100" max="2000" step="100" value="300" oninput="sliderChange(this.value)">
         <div class="val" id="sliderVal">
             300ms
@@ -37,19 +37,20 @@
 
     <ul class="btn-list" >
         <li style="margin:25px 0">
-            <div class="buttondesc">shuffle</div>
+            <div class="buttondesc">Shuffle</div>
             <button id="easyShuffleButton" class="w3-btn w3-green">Easy</button>
             <button id="shuffleButton" class="w3-btn w3-red">Hard</button>
         </li>
         <li style="margin:25px 0">
-            <div class="buttondesc">solver</div>
+            <div class="buttondesc">Solver</div>
             <button id="LBLButton" class="w3-btn w3-orange">LBL</button>
             <button id="CFOPButton" class="w3-btn w3-yellow">CFOP</button>
         </li>
         <li>
-            <div class="buttondesc">tools</div>
-            <button id="resetButton" class="w3-btn w3-blue">reset</button>
+            <div class="buttondesc">Tools</div>
+            <button id="resetButton" class="w3-btn w3-blue">Reset</button>
             <button id="spriteHideButton" class="w3-btn w3-gray">Hide</button>
+            <button id="pauseButton" class="w3-btn w3-gray">Pause</button>
         </li>
     </ul>
 
@@ -78,6 +79,7 @@
         let mouse = new THREE.Vector2();
         let isRotating = false;
         let isMouseDown = false;
+        let isPaused = false;
 
         let intersect;
         let normalize;
@@ -582,18 +584,27 @@
             $spriteHideButton.addEventListener('click', function() {
                 isSpriteHiden = !isSpriteHiden;
                 if (isSpriteHiden) {
-                    $spriteHideButton.innerHTML = "show";
+                    $spriteHideButton.innerHTML = "Show";
                     for (let i = 0; i < sprites.length; i++) {
                         sprites[i].visible = false;
                     }
                 } else {
-                    $spriteHideButton.innerHTML = "hide";
+                    $spriteHideButton.innerHTML = "Hide";
                     for (let i = 0; i < sprites.length; i++) {
                         sprites[i].visible = true;
                     }
                 }
             }, false);
 
+            let $pauseButton = document.querySelector('#pauseButton');
+            $pauseButton.addEventListener('click', function() {
+                isPaused = !isPaused;
+                if(isPaused) {
+                    $pauseButton.innerHTML = "Resume";
+                } else {
+                    $pauseButton.innerHTML = "Pause";
+                }
+            }, false);
 
             // CFOP Solver.
             let $CFOPButton = document.querySelector('#CFOPButton');

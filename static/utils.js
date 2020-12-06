@@ -281,8 +281,16 @@ const RIndex = [8, 5, 2, 17, 14, 11, 26, 23, 20];
 const UIndex = [2, 1, 0, 11, 10, 9, 20, 19, 18];
 const LIndex = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 const BIndex = [24, 25, 26, 21, 22, 23, 18, 19, 20];
+
 function serializeCube() {
-    let res = [[], [], [], [], [], []];
+    let res = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ];
     for (let i = 0; i < 9; i++) {
         res[0].push(colorString[getFaceColorByVector(getCubeByIndex(FIndex[i]), ZLine)]);
         res[1].push(colorString[getFaceColorByVector(getCubeByIndex(DIndex[i]), YLineR)]);
@@ -398,7 +406,7 @@ function rotateMove(target, vector, callback) {
     let direction = getDirection(vector); // calculate rotation direction.
     let elements = getCubesToRotate(target, direction);
     window.requestAnimFrame(function(timestamp) {
-        rotateAnimation(elements, direction, timestamp, 0, null, callback);
+        rotateAnimation(elements, direction, 0, timestamp, null, 0, callback);
     });
 }
 
@@ -462,109 +470,115 @@ function rotateAroundWorldX(obj, rad) {
 /**
  * Function to animate rotation.
  */
-function rotateAnimation(elements, direction, currentstamp, startstamp, laststamp, callback) {
+function rotateAnimation(elements, direction, startstamp, currentstamp, laststamp, pausedstamp, callback) {
     let $slider = document.getElementById('slider');
     sliderChange($slider.value);
     allowSliderChange = false;
-
     let isLastRotateFrame = false;
     if (startstamp === 0) {
         startstamp = currentstamp;
         laststamp = currentstamp;
     }
-    if (currentstamp - startstamp >= timePerRotation) { // stop animation.
-        currentstamp = startstamp + timePerRotation;
-        isLastRotateFrame = true;
-    }
-    switch (direction) {
-        // Clockwise around X.
-        case 1:
-            for (let i = 0; i < elements.length; i++) {
-                rotateAroundWorldX(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
-            }
-            break;
-            // Counter-Clockwise around X.
-        case 2:
-            for (let i = 0; i < elements.length; i++) {
-                rotateAroundWorldX(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
-            }
-            break;
-            // Clockwise around Y.
-        case 3:
-            for (let i = 0; i < elements.length; i++) {
-                rotateAroundWorldY(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
-            }
-            break;
-            // Counter-Clockwise around Y.
-        case 4:
-            for (let i = 0; i < elements.length; i++) {
-                rotateAroundWorldY(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
-            }
-            break;
-            // Clockwise around Z.
-        case 5:
-            for (let i = 0; i < elements.length; i++) {
-                rotateAroundWorldZ(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
-            }
-            break;
-            // Counter-Clockwise around Z.
-        case 6:
-            for (let i = 0; i < elements.length; i++) {
-                rotateAroundWorldZ(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
-            }
-            break;
-        default:
-            break;
-    }
-    if (!isLastRotateFrame) {
+    if (isPaused) {
         window.requestAnimFrame(function(timestamp) {
-            rotateAnimation(elements, direction, timestamp, startstamp, currentstamp, callback);
+            rotateAnimation(elements, direction, startstamp, timestamp, currentstamp, pausedstamp + currentstamp - laststamp, callback);
         });
     } else {
-        if (!isShuffle) {
-            stepNum++;
-            updateStepCounter();
+        if (currentstamp - startstamp - pausedstamp >= timePerRotation) { // stop animation.
+            currentstamp = startstamp + pausedstamp + timePerRotation;
+            isLastRotateFrame = true;
         }
-        isRotating = false;
-        startPoint = null;
-        updateCubeIndex(elements);
-        serializedRubiksCube = serializeCube();
-        update2DSerializedCube(serializedRubiksCube);
-        if (callback) {
-            callback();
+        switch (direction) {
+            // Clockwise around X.
+            case 1:
+                for (let i = 0; i < elements.length; i++) {
+                    rotateAroundWorldX(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
+                }
+                break;
+                // Counter-Clockwise around X.
+            case 2:
+                for (let i = 0; i < elements.length; i++) {
+                    rotateAroundWorldX(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
+                }
+                break;
+                // Clockwise around Y.
+            case 3:
+                for (let i = 0; i < elements.length; i++) {
+                    rotateAroundWorldY(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
+                }
+                break;
+                // Counter-Clockwise around Y.
+            case 4:
+                for (let i = 0; i < elements.length; i++) {
+                    rotateAroundWorldY(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
+                }
+                break;
+                // Clockwise around Z.
+            case 5:
+                for (let i = 0; i < elements.length; i++) {
+                    rotateAroundWorldZ(elements[i], -90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
+                }
+                break;
+                // Counter-Clockwise around Z.
+            case 6:
+                for (let i = 0; i < elements.length; i++) {
+                    rotateAroundWorldZ(elements[i], 90 * Math.PI / 180 * (currentstamp - laststamp) / timePerRotation);
+                }
+                break;
+            default:
+                break;
+        }
+        if (!isLastRotateFrame) {
+            window.requestAnimFrame(function(timestamp) {
+                console.log("window::", timestamp, startstamp);
+                rotateAnimation(elements, direction, startstamp, timestamp, currentstamp, pausedstamp, callback);
+            });
         } else {
-            if (isAutoSolver) {
-                switch (curLBLstep) {
-                    case 1:
-                        step1();
-                        break;
-                    case 2:
-                        step2();
-                        break;
-                    case 3:
-                        step3();
-                        break;
-                    case 4:
-                        step4();
-                        break;
-                    case 5:
-                        step5();
-                        break;
-                    case 6:
-                        step6();
-                        break;
-                    case 7:
-                        step7();
-                        break;
-                    case 8:
-                        step8();
-                        break;
-                    default:
-                        break;
+            if (!isShuffle) {
+                stepNum++;
+                updateStepCounter();
+            }
+            isRotating = false;
+            startPoint = null;
+            updateCubeIndex(elements);
+            serializedRubiksCube = serializeCube();
+            update2DSerializedCube(serializedRubiksCube);
+            if (callback) {
+                callback();
+            } else {
+                if (isAutoSolver) {
+                    switch (curLBLstep) {
+                        case 1:
+                            step1();
+                            break;
+                        case 2:
+                            step2();
+                            break;
+                        case 3:
+                            step3();
+                            break;
+                        case 4:
+                            step4();
+                            break;
+                        case 5:
+                            step5();
+                            break;
+                        case 6:
+                            step6();
+                            break;
+                        case 7:
+                            step7();
+                            break;
+                        case 8:
+                            step8();
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
+            allowSliderChange = true;
         }
-        allowSliderChange = true;
     }
 }
 
@@ -604,7 +618,7 @@ function getCubesToRotate(target, direction) {
                 }
             }
             break;
-        // Around Y.
+            // Around Y.
         case 3:
         case 4:
             for (let i = 0; i < cubes.length; i++) {
@@ -614,7 +628,7 @@ function getCubesToRotate(target, direction) {
                 }
             }
             break;
-        // Around Z.
+            // Around Z.
         case 5:
         case 6:
             for (let i = 0; i < cubes.length; i++) {
