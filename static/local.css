@@ -56,6 +56,22 @@ p {
     margin: 5px 0 0 5px;
 }
 
+.solutionDIV {
+    position: absolute;
+    top: 10%;
+    left: 85%;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: sans-serif;
+}
+
+#sol-done {
+    color: gray;
+}
+#sol-todo {
+    color: red;
+}
+
 .cube-serialize {
     position: absolute;
     top: 60%;

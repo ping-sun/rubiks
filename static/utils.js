@@ -530,7 +530,6 @@ function rotateAnimation(elements, direction, startstamp, currentstamp, laststam
         }
         if (!isLastRotateFrame) {
             window.requestAnimFrame(function(timestamp) {
-                console.log("window::", timestamp, startstamp);
                 rotateAnimation(elements, direction, startstamp, timestamp, currentstamp, pausedstamp, callback);
             });
         } else {

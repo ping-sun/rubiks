@@ -33,7 +33,7 @@
     </div>
     
     <div class="desc" id="sliderDIV">Speed
-        <input id="slider" type="range" min="100" max="2000" step="100" value="300" oninput="sliderChange(this.value)">
+        <input id="slider" type="range" min="100" max="3000" step="100" value="300" oninput="sliderChange(this.value)">
         <div class="val" id="sliderVal">
             300ms
         </div>
@@ -57,6 +57,18 @@
             <button id="pauseButton" class="w3-btn w3-yellow">Pause</button>
         </li>
     </ul>
+
+    <div class="solutionDIV">
+        <div>
+            <span>Solution</span>
+        </div>
+        <p>
+            <span style="color:black">[</span>
+            <span id="sol-done"></span>
+            <span id="sol-todo"></span>
+            <span style="color:black">]</span>
+        </p>
+    </div>
 
     <div class="cube-serialize">
         <div class="face"></div>
@@ -104,6 +116,8 @@
         let timePerRotation = 300;
         let allowSliderChange = true;
 
+        let solution = [];
+
         // Six possible rotation directions.
         const XLine = new THREE.Vector3(1, 0, 0); // X
         const XLineR = new THREE.Vector3(-1, 0, 0); // Anti-X
@@ -133,7 +147,6 @@
 
         // Timer
         let $timerVal = document.getElementById('timerVal');
-        console.log($timerVal);
         let timerEnabled = false;
         let lastTime = new Date();
         setInterval(myTimer, 30);
@@ -553,6 +566,8 @@
                 lastTime = new Date();
                 stepNum = 0;
                 updateStepCounter();
+                solution = [];
+                clearSolutionDiv();
 
                 shuffle(0, 10);
             }, false);
@@ -565,6 +580,8 @@
                 lastTime = new Date();
                 stepNum = 0;
                 updateStepCounter();
+                solution = [];
+                clearSolutionDiv();
 
                 shuffle(10, 10);
             }, false);
