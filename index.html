@@ -538,6 +538,10 @@
             renderer.render(scene, camera);
             window.requestAnimFrame(render);
         }
+        function clearSolutionDiv() {
+            document.getElementById('sol-done').innerHTML = "";
+            document.getElementById('sol-todo').innerHTML = "";
+        }
 
         // Main function.
         function threeStart() {

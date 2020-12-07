@@ -119,6 +119,10 @@ function b(rotateNum, callback) {
  * @param  {Function} callback  [callback function after all methods done]
  */
 function runMethodAtIndex(arr, index, rotateNum, callback) {
+    if (isAutoSolver) {
+        solution.push(arr[index].name);
+        updateSolutionDiv();
+    }
     if (index >= arr.length - 1) {
         if (callback) {
             arr[index](rotateNum, callback);
@@ -134,6 +138,21 @@ function runMethodAtIndex(arr, index, rotateNum, callback) {
         })
     }
 }
+
+function updateSolutionDiv() {
+    let $done = document.getElementById('sol-done');
+    let $todo = document.getElementById('sol-todo');
+    if (solution.length > 1) {
+        if (solution.length % 15 === 0) {
+            $done.innerHTML = $done.innerHTML + "<br> ";
+        }
+        $done.innerHTML = $done.innerHTML + " " + solution[solution.length-2];
+    }
+    if (solution.length) {
+        $todo.innerHTML = solution[solution.length-1];
+    }
+}
+
 /*
  * Function to get the cube by index after clockwise rotation around Y
  */
