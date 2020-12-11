@@ -15,20 +15,20 @@ div#canvas-frame {
 }
 #titleDIV {
     position: absolute;
-    top: 2%;
+    top: 5%;
     left: 5%;
     font-size: 48px;
     font-weight: bold;
     font-family: sans-serif;
 }
 #timerDIV {
-    top: 10%;
-}
-#stepCounterDIV {
     top: 20%;
 }
-#sliderDIV {
+#stepCounterDIV {
     top: 30%;
+}
+#sliderDIV {
+    top: 40%;
 }
 
 .buttondesc {
@@ -43,7 +43,7 @@ div#canvas-frame {
     padding: 0;
     position: absolute;
     left: 5%;
-    top: 40%;
+    top: 60%;
 }
 
 button {
